@@ -1,8 +1,11 @@
 #include <string>
 #include <vector>
+#include <map>
 
-std::vector<std::string> importDictionary(std::string fileName);
+std::map<std::string, unsigned int>importDictionary(std::string fileName);
 
-std::vector<std::string> findWords();
+std::vector<std::map<std::string, unsigned int>> findWords();
 
 int convertToBitwise(std::string word);
+
+bool checkMultiLetters(std::string word);
