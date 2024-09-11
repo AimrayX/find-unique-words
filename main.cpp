@@ -1,35 +1,40 @@
 #include <fstream>
 #include <iostream>
+#include <time.h>
 
 #include <unistd.h>
 
 #include "function.h"
 
-
-int main() {
-
+int main()
+{
+    clock_t tStart = clock();
     std::vector<std::map<std::string, unsigned int>> result = findWords();
-    
-    for (size_t i = result.size()-10; i < result.size(); i++)
+
+    for (size_t i = result.size() - 10; i < result.size(); i++)
     {
         std::map<std::string, unsigned int> tempResult = result[i];
 
         std::map<std::string, unsigned int>::iterator its;
-        for (its = tempResult.begin(); its != tempResult.end(); its++) {
+        for (its = tempResult.begin(); its != tempResult.end(); its++)
+        {
             std::cout << (its)->first << " : " << (its)->second << "\n";
         }
         std::cout << "\n\n";
     }
-    
-    std::cout << result.size() << std::endl;
 
+    std::cout << result.size() << std::endl;
+    printf("Time taken: %.2fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
+    return 0;
 }
 
-std::map<std::string, unsigned int> importDictionary(std::string fileName) {
+std::map<std::string, unsigned int> importDictionary(std::string fileName)
+{
 
     std::ifstream inputFile(fileName);
 
-    if (!inputFile.is_open()) {
+    if (!inputFile.is_open())
+    {
         std::cerr << "Error opening the file!" << std::endl;
     }
 
@@ -38,18 +43,12 @@ std::map<std::string, unsigned int> importDictionary(std::string fileName) {
     std::vector<std::string> tempArr;
     std::map<std::string, unsigned int> myMap;
 
-    while (getline(inputFile, line, '\n')) {
-        if (line.size() == 5 )
+    while (getline(inputFile, line, '\n'))
+    {
+        if (line.size() == 5)
         {
-            if ((line[0] == '.' || line[1] == '.' || line[2] == '.' || line[3] == '.' || line[4] == '.') 
-            || (line[0] == '-' || line[1] == '-' || line[2] == '-' || line[3] == '-' || line[4] == '-') 
-            || (line[0] == ' ' || line[1] == ' ' || line[2] == ' ' || line[3] == ' ' || line[4] == ' ')
-            || (line[0] == '\'' || line[1] == '\'' || line[2] == '\'' || line[3] == '\'' || line[4] == '\'')
-            || (line[0] == '/' || line[1] == '/' || line[2] == '/' || line[3] == '/' || line[4] == '/')
-            || (line[0] == ',' || line[1] == ',' || line[2] == ',' || line[3] == ',' || line[4] == ',')
-            || (line[0] == '&' || line[1] == '&' || line[2] == '&' || line[3] == '&' || line[4] == '&')
-            || (std::isdigit(line[0]) || std::isdigit(line[1]) || std::isdigit(line[2]) || std::isdigit(line[3]) || std::isdigit(line[4]))
-            || checkMultiLetters(line)) {
+            if ((line[0] == '.' || line[1] == '.' || line[2] == '.' || line[3] == '.' || line[4] == '.') || (line[0] == '-' || line[1] == '-' || line[2] == '-' || line[3] == '-' || line[4] == '-') || (line[0] == ' ' || line[1] == ' ' || line[2] == ' ' || line[3] == ' ' || line[4] == ' ') || (line[0] == '\'' || line[1] == '\'' || line[2] == '\'' || line[3] == '\'' || line[4] == '\'') || (line[0] == '/' || line[1] == '/' || line[2] == '/' || line[3] == '/' || line[4] == '/') || (line[0] == ',' || line[1] == ',' || line[2] == ',' || line[3] == ',' || line[4] == ',') || (line[0] == '&' || line[1] == '&' || line[2] == '&' || line[3] == '&' || line[4] == '&') || (std::isdigit(line[0]) || std::isdigit(line[1]) || std::isdigit(line[2]) || std::isdigit(line[3]) || std::isdigit(line[4])) || checkMultiLetters(line))
+            {
                 continue;
             }
             tempArr.push_back(line);
@@ -57,53 +56,53 @@ std::map<std::string, unsigned int> importDictionary(std::string fileName) {
             if (convertToBitwise(line) < 1073741824)
             {
                 myMap.insert({line, convertToBitwise(line)});
-            } else {
+            }
+            else
+            {
                 std::cout << "didn't include word" << std::endl;
             }
-
         }
     }
-    return myMap;   
+    return myMap;
 }
 
-std::vector<std::map<std::string, unsigned int>> findWords() {
+std::vector<std::map<std::string, unsigned int>> findWords()
+{
 
     std::map<std::string, unsigned int> dictVec = importDictionary("dict.txt");
 
     std::map<std::string, unsigned int> tempList;
     std::vector<std::map<std::string, unsigned int>> wordLists;
-    unsigned int bitwised = 0;
+
     unsigned int previous;
 
     std::map<std::string, unsigned int>::iterator currentElement;
     std::map<std::string, unsigned int>::iterator previousIt;
     std::map<std::string, unsigned int>::iterator it;
     std::map<std::string, unsigned int>::iterator itr;
+
+    std::map<std::string, unsigned int>::iterator node2;
+    std::map<std::string, unsigned int>::iterator node3;
+    std::map<std::string, unsigned int>::iterator node4;
+
     bool doesAppear = false;
 
-    for (it = dictVec.begin(); std::next(it) != dictVec.end(); it++) {
+    for (it = dictVec.begin(); std::next(it) != dictVec.end(); it++)
+    {
         tempList.insert(*it);
-        //std::cout << "For loop 1 " << std::endl;
-
-        for (itr = std::next(it), previousIt = it, previous = (it)->second; itr != dictVec.end() && tempList.size() < 5; itr++) {
-            //bitwised = previous & (itr)->second;
-            //std::cout << "For loop 2 " << std::endl;
-
+        
+        for (itr = std::next(it), previousIt = it; itr != dictVec.end() && tempList.size() < 5; itr++)
+        {       
             for (currentElement = tempList.begin(); currentElement != tempList.end(); currentElement++)
             {
-                //std::cout << "For loop 3 " << std::endl;
                 if (((currentElement)->second & (itr)->second) == 0)
                 {
-                    
                     doesAppear = false;
-                    //std::cout << (currentElement)->first << " & " << (itr)->first << " have " << ((currentElement)->second & (itr)->second) << ", zero overlap" << " list size = " << tempList.size() << "\n";
                     previous = (itr)->second;
                     previousIt = itr;
-
-                    
-                } else {
-                    //std::cout << (currentElement)->first << " & " << (itr)->first << " have " << ((currentElement)->second & (itr)->second) << ", some overlap\n";
-                    //bitwised = 0;
+                }
+                else
+                {
                     doesAppear = true;
                     break;
                 }
@@ -111,33 +110,68 @@ std::vector<std::map<std::string, unsigned int>> findWords() {
 
             if (!doesAppear)
             {
-                std::cout << "written to tempList" << "\n";
                 tempList.insert(*itr);
                 doesAppear = true;
-                std::cout << "\n\n\ninserted Element " << (itr)->first << " list size = " << tempList.size() << "\n\n\n";
-                if (tempList.size() == 4)
+
+                if (tempList.size() == 2)
                 {
-                    std::cout << "Nearly there" << std::endl;
-                } else if (tempList.size() == 5)
-                {
-                    std::cout << "Found" << std::endl;
+                    node2 = itr;
                 }
-                
+                else if (tempList.size() == 3)
+                {
+                    node3 = itr;
+                }
+                else if (tempList.size() == 4)
+                {
+                    node4 = itr;
+                }
+                else if (tempList.size() == 5)
+                {
+                    std::cout << "Found\n" << std::endl;
+                }
             }
-            
+
             doesAppear = false;
-            
-        }
 
-        if (tempList.size() == 5)
-        {
-            wordLists.push_back(tempList);
-            std::cout << "completed list of 5\n";
-
-            std::map<std::string, unsigned int>::iterator itf;
-            for (itf = tempList.begin(); itf != tempList.end(); itf++)
+            if (tempList.size() == 5)
             {
-                std::cout << "\n\n*************************" << (itf)->first << "**************************\n\n";
+                wordLists.push_back(tempList);
+                std::cout << "completed list of 5\n";
+
+                std::map<std::string, unsigned int>::iterator itf;
+                for (itf = tempList.begin(); itf != tempList.end(); itf++)
+                {
+                    std::cout << "\n\n*************************" << (itf)->first << "**************************\n\n";
+                }
+
+            }
+            else if (tempList.size() == 2 && std::next(itr) == dictVec.end())
+            {
+                if (std::next(node2) == dictVec.end())
+                {
+                    break;
+                }
+
+                tempList.erase(std::prev(tempList.end()));
+                itr = std::next(node2);
+            }
+            else if (tempList.size() == 3 && std::next(itr) == dictVec.end())
+            {
+                if (std::next(node3) == dictVec.end())
+                {
+                    break;
+                }
+                tempList.erase(std::prev(tempList.end()));
+                itr = std::next(node3);
+            }
+            else if (tempList.size() == 4 && std::next(itr) == dictVec.end())
+            {
+                if (std::next(node4) == dictVec.end())
+                {
+                    break;
+                }
+                tempList.erase(std::prev(tempList.end()));
+                itr = std::next(node4);
             }
         }
         tempList.clear();
@@ -145,8 +179,9 @@ std::vector<std::map<std::string, unsigned int>> findWords() {
     return wordLists;
 }
 
-int convertToBitwise(std::string word) {
-    
+int convertToBitwise(std::string word)
+{
+
     unsigned int wordAsInt = 0;
     for (size_t i = 0; i < 5; i++)
     {
@@ -156,7 +191,7 @@ int convertToBitwise(std::string word) {
         case 'A':
             wordAsInt |= 0b00000000000000000000000000000001;
             break;
-        
+
         case 'b':
         case 'B':
             wordAsInt |= 0b00000000000000000000000000000010;
@@ -288,21 +323,21 @@ int convertToBitwise(std::string word) {
             break;
         }
     }
-    
+
     return wordAsInt;
 }
 
-bool checkMultiLetters(std::string word) {
-    for (size_t i = 0; i < 5; i++) {
-        for (size_t j = i+1; j < 5; j++)
+bool checkMultiLetters(std::string word)
+{
+    for (size_t i = 0; i < 5; i++)
+    {
+        for (size_t j = i + 1; j < 5; j++)
         {
-            if (std::tolower(word[i])  == std::tolower(word[j]))
+            if (std::tolower(word[i]) == std::tolower(word[j]))
             {
                 return true;
             }
-            
         }
-        
     }
 
     return false;
