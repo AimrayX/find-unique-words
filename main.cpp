@@ -70,6 +70,8 @@ std::vector<std::map<std::string, unsigned int>> findWords()
 {
 
     std::map<std::string, unsigned int> dictVec = importDictionary("dict.txt");
+    std::cout << "***********\n\n" << dictVec.size() << "\n\n***********" << std::endl;
+    
 
     std::map<std::string, unsigned int> tempList;
     std::vector<std::map<std::string, unsigned int>> wordLists;
@@ -86,13 +88,17 @@ std::vector<std::map<std::string, unsigned int>> findWords()
     std::map<std::string, unsigned int>::iterator node4;
 
     bool doesAppear = false;
+    int i = 0;
 
     for (it = dictVec.begin(); std::next(it) != dictVec.end(); it++)
     {
+        i++;
         tempList.insert(*it);
+        std::cout << i << " / " << dictVec.size() <<std::endl;
         
         for (itr = std::next(it), previousIt = it; itr != dictVec.end() && tempList.size() < 5; itr++)
         {       
+            
             for (currentElement = tempList.begin(); currentElement != tempList.end(); currentElement++)
             {
                 if (((currentElement)->second & (itr)->second) == 0)
