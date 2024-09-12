@@ -1,6 +1,7 @@
 #include <fstream>
 #include <iostream>
 #include <time.h>
+#include <algorithm>
 
 #include <unistd.h>
 
@@ -11,18 +12,21 @@ int main()
     clock_t tStart = clock();
     std::vector<std::map<std::string, unsigned int>> result = findWords();
 
-    for (size_t i = result.size() - 10; i < result.size(); i++)
+    std::ofstream MyFile("result.txt");
+
+    for (size_t i = 0; i < result.size(); i++)
     {
         std::map<std::string, unsigned int> tempResult = result[i];
 
         std::map<std::string, unsigned int>::iterator its;
         for (its = tempResult.begin(); its != tempResult.end(); its++)
         {
-            std::cout << (its)->first << " : " << (its)->second << "\n";
+            MyFile << (its)->first << "\n";
         }
-        std::cout << "\n\n";
+        MyFile << "\n";
     }
 
+    MyFile.close();
     std::cout << result.size() << std::endl;
     printf("Time taken: %.2fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
     return 0;
@@ -39,8 +43,6 @@ std::map<std::string, unsigned int> importDictionary(std::string fileName)
     }
 
     std::string line;
-    std::vector<unsigned int> arr;
-    std::vector<std::string> tempArr;
     std::map<std::string, unsigned int> myMap;
 
     while (getline(inputFile, line, '\n'))
@@ -51,8 +53,6 @@ std::map<std::string, unsigned int> importDictionary(std::string fileName)
             {
                 continue;
             }
-            tempArr.push_back(line);
-            arr.push_back(convertToBitwise(line));
             if (convertToBitwise(line) < 1073741824)
             {
                 myMap.insert({line, convertToBitwise(line)});
@@ -68,20 +68,20 @@ std::map<std::string, unsigned int> importDictionary(std::string fileName)
 
 std::vector<std::map<std::string, unsigned int>> findWords()
 {
-
+    clock_t tStart = clock();
     std::map<std::string, unsigned int> dictVec = importDictionary("dict.txt");
-    std::cout << "***********\n\n" << dictVec.size() << "\n\n***********" << std::endl;
+    int dictVecSize = dictVec.size();
+    std::cout << "***********\n\n" << dictVecSize << "\n\n***********" << std::endl;
     
 
     std::map<std::string, unsigned int> tempList;
     std::vector<std::map<std::string, unsigned int>> wordLists;
 
-    unsigned int previous;
-
     std::map<std::string, unsigned int>::iterator currentElement;
-    std::map<std::string, unsigned int>::iterator previousIt;
     std::map<std::string, unsigned int>::iterator it;
     std::map<std::string, unsigned int>::iterator itr;
+
+    std::map<std::string, unsigned int>::iterator itrNext;
 
     std::map<std::string, unsigned int>::iterator node2;
     std::map<std::string, unsigned int>::iterator node3;
@@ -89,14 +89,20 @@ std::vector<std::map<std::string, unsigned int>> findWords()
 
     bool doesAppear = false;
     int i = 0;
+    int tempListSize = 0;
 
     for (it = dictVec.begin(); std::next(it) != dictVec.end(); it++)
     {
         i++;
         tempList.insert(*it);
-        std::cout << i << " / " << dictVec.size() <<std::endl;
+        tempListSize += 1;
+        if (i % 10 == 0)
+        {
+            std::cout << i << " / " << dictVecSize <<std::endl;
+            printf("%.2fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
+        }
         
-        for (itr = std::next(it), previousIt = it; itr != dictVec.end() && tempList.size() < 5; itr++)
+        for (itr = std::next(it); itr != dictVec.end() && tempListSize < 5; itr++)
         {       
             
             for (currentElement = tempList.begin(); currentElement != tempList.end(); currentElement++)
@@ -104,8 +110,6 @@ std::vector<std::map<std::string, unsigned int>> findWords()
                 if (((currentElement)->second & (itr)->second) == 0)
                 {
                     doesAppear = false;
-                    previous = (itr)->second;
-                    previousIt = itr;
                 }
                 else
                 {
@@ -117,21 +121,22 @@ std::vector<std::map<std::string, unsigned int>> findWords()
             if (!doesAppear)
             {
                 tempList.insert(*itr);
+                tempListSize += 1;
                 doesAppear = true;
 
-                if (tempList.size() == 2)
+                if (tempListSize == 2)
                 {
                     node2 = itr;
                 }
-                else if (tempList.size() == 3)
+                else if (tempListSize == 3)
                 {
                     node3 = itr;
                 }
-                else if (tempList.size() == 4)
+                else if (tempListSize == 4)
                 {
                     node4 = itr;
                 }
-                else if (tempList.size() == 5)
+                else if (tempListSize == 5)
                 {
                     std::cout << "Found\n" << std::endl;
                 }
@@ -139,7 +144,8 @@ std::vector<std::map<std::string, unsigned int>> findWords()
 
             doesAppear = false;
 
-            if (tempList.size() == 5)
+            itrNext = std::next(itr);
+            if (tempListSize == 5)
             {
                 wordLists.push_back(tempList);
                 std::cout << "completed list of 5\n";
@@ -151,7 +157,7 @@ std::vector<std::map<std::string, unsigned int>> findWords()
                 }
 
             }
-            else if (tempList.size() == 2 && std::next(itr) == dictVec.end())
+            else if (tempListSize == 2 && itrNext == dictVec.end())
             {
                 if (std::next(node2) == dictVec.end())
                 {
@@ -159,28 +165,32 @@ std::vector<std::map<std::string, unsigned int>> findWords()
                 }
 
                 tempList.erase(std::prev(tempList.end()));
+                tempListSize -= 1;
                 itr = std::next(node2);
             }
-            else if (tempList.size() == 3 && std::next(itr) == dictVec.end())
+            else if (tempListSize == 3 && itrNext == dictVec.end())
             {
                 if (std::next(node3) == dictVec.end())
                 {
                     break;
                 }
                 tempList.erase(std::prev(tempList.end()));
+                tempListSize -= 1;
                 itr = std::next(node3);
             }
-            else if (tempList.size() == 4 && std::next(itr) == dictVec.end())
+            else if (tempListSize == 4 && itrNext == dictVec.end())
             {
                 if (std::next(node4) == dictVec.end())
                 {
                     break;
                 }
                 tempList.erase(std::prev(tempList.end()));
+                tempListSize -= 1;
                 itr = std::next(node4);
             }
         }
         tempList.clear();
+        tempListSize = 0;
     }
     return wordLists;
 }
@@ -347,4 +357,11 @@ bool checkMultiLetters(std::string word)
     }
 
     return false;
+}
+
+bool is_anagram(std::string s1, std::string s2)
+{
+  std::sort(s1.begin(), s1.end());
+  std::sort(s2.begin(), s2.end());
+  return s1 == s2;
 }
