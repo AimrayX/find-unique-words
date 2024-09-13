@@ -54,7 +54,7 @@ std::map<std::string, unsigned int> importDictionary(std::string fileName)
                 continue;
             }
             if (convertToBitwise(line) < 1073741824)
-            {
+            {                            
                 myMap.insert({line, convertToBitwise(line)});
             }
             else
@@ -63,6 +63,27 @@ std::map<std::string, unsigned int> importDictionary(std::string fileName)
             }
         }
     }
+
+    std::map<std::string, unsigned int>::iterator myMapIt1;
+    std::map<std::string, unsigned int>::iterator myMapIt2;
+    std::map<std::string, unsigned int>::iterator myMapTempErase;
+    std::map<std::string, unsigned int>::iterator secondToLastElementMyMapIt = std::prev(myMap.end());
+
+    std::cout << "starting filtering for anagrams: size = " << myMap.size() << std::endl;
+    for (myMapIt1 = myMap.begin(); myMapIt1 != secondToLastElementMyMapIt; myMapIt1++)
+    {
+        for (myMapIt2 = std::next(myMapIt1); myMapIt2 != myMap.end(); myMapIt2++)
+        {
+            if (is_anagram((myMapIt1)->first, (myMapIt2)->first))
+            {
+                myMapTempErase = myMapIt2;
+                myMapIt2 = std::prev(myMapIt2);          
+                myMap.erase(myMapTempErase);
+                std::cout << "deleted an anagram: size = " << myMap.size() << std::endl;
+            }
+        }       
+    }
+    std::cout << "finished filtering for anagrams: size = " << myMap.size() << std::endl;
     return myMap;
 }
 
@@ -80,8 +101,7 @@ std::vector<std::map<std::string, unsigned int>> findWords()
     std::map<std::string, unsigned int>::iterator currentElement;
     std::map<std::string, unsigned int>::iterator it;
     std::map<std::string, unsigned int>::iterator itr;
-
-    std::map<std::string, unsigned int>::iterator itrNext;
+    std::map<std::string, unsigned int>::iterator secondToLastDictVecIt = std::prev(dictVec.end());
 
     std::map<std::string, unsigned int>::iterator node2;
     std::map<std::string, unsigned int>::iterator node3;
@@ -91,14 +111,14 @@ std::vector<std::map<std::string, unsigned int>> findWords()
     int i = 0;
     int tempListSize = 0;
 
-    for (it = dictVec.begin(); std::next(it) != dictVec.end(); it++)
+    for (it = dictVec.begin(); it != secondToLastDictVecIt; it++)
     {
         i++;
         tempList.insert(*it);
         tempListSize += 1;
         if (i % 10 == 0)
         {
-            std::cout << i << " / " << dictVecSize <<std::endl;
+            std::cout << i << " / " << dictVecSize << std::endl;
             printf("%.2fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
         }
         
@@ -144,7 +164,6 @@ std::vector<std::map<std::string, unsigned int>> findWords()
 
             doesAppear = false;
 
-            itrNext = std::next(itr);
             if (tempListSize == 5)
             {
                 wordLists.push_back(tempList);
@@ -157,9 +176,9 @@ std::vector<std::map<std::string, unsigned int>> findWords()
                 }
 
             }
-            else if (tempListSize == 2 && itrNext == dictVec.end())
+            else if (tempListSize == 2 && itr == secondToLastDictVecIt)
             {
-                if (std::next(node2) == dictVec.end())
+                if (node2 == secondToLastDictVecIt)
                 {
                     break;
                 }
@@ -168,9 +187,9 @@ std::vector<std::map<std::string, unsigned int>> findWords()
                 tempListSize -= 1;
                 itr = std::next(node2);
             }
-            else if (tempListSize == 3 && itrNext == dictVec.end())
+            else if (tempListSize == 3 && itr== secondToLastDictVecIt)
             {
-                if (std::next(node3) == dictVec.end())
+                if (node3 == secondToLastDictVecIt)
                 {
                     break;
                 }
@@ -178,9 +197,9 @@ std::vector<std::map<std::string, unsigned int>> findWords()
                 tempListSize -= 1;
                 itr = std::next(node3);
             }
-            else if (tempListSize == 4 && itrNext == dictVec.end())
+            else if (tempListSize == 4 && itr == secondToLastDictVecIt)
             {
-                if (std::next(node4) == dictVec.end())
+                if (node4 == secondToLastDictVecIt)
                 {
                     break;
                 }
