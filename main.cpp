@@ -10,15 +10,15 @@
 int main()
 {
     clock_t tStart = clock();
-    std::vector<std::map<std::string, unsigned int>> result = findWords();
+    std::vector<std::vector<std::pair<std::string, unsigned int>>> result = findWords();
 
     std::ofstream MyFile("result.txt");
 
     for (size_t i = 0; i < result.size(); i++)
     {
-        std::map<std::string, unsigned int> tempResult = result[i];
+        std::vector<std::pair<std::string, unsigned int>> tempResult = result[i];
 
-        std::map<std::string, unsigned int>::iterator its;
+        std::vector<std::pair<std::string, unsigned int>>::iterator its;
         for (its = tempResult.begin(); its != tempResult.end(); its++)
         {
             MyFile << (its)->first << "\n";
@@ -32,7 +32,7 @@ int main()
     return 0;
 }
 
-std::map<std::string, unsigned int> importDictionary(std::string fileName)
+std::vector<std::pair<std::string, unsigned int>> importDictionary(std::string fileName)
 {
 
     std::ifstream inputFile(fileName);
@@ -43,7 +43,7 @@ std::map<std::string, unsigned int> importDictionary(std::string fileName)
     }
 
     std::string line;
-    std::map<std::string, unsigned int> myMap;
+    std::vector<std::pair<std::string, unsigned int>> myMap;
 
     while (getline(inputFile, line, '\n'))
     {
@@ -55,7 +55,7 @@ std::map<std::string, unsigned int> importDictionary(std::string fileName)
             }
             if (convertToBitwise(line) < 1073741824)
             {                            
-                myMap.insert({line, convertToBitwise(line)});
+                myMap.push_back({line, convertToBitwise(line)});
             }
             else
             {
@@ -64,48 +64,62 @@ std::map<std::string, unsigned int> importDictionary(std::string fileName)
         }
     }
 
-    std::map<std::string, unsigned int>::iterator myMapIt1;
-    std::map<std::string, unsigned int>::iterator myMapIt2;
-    std::map<std::string, unsigned int>::iterator myMapTempErase;
-    std::map<std::string, unsigned int>::iterator secondToLastElementMyMapIt = std::prev(myMap.end());
+    std::vector<std::pair<std::string, unsigned int>>::iterator myMapIt1;
+    std::vector<std::pair<std::string, unsigned int>>::iterator myMapIt2;
+    std::vector<std::pair<std::string, unsigned int>>::iterator myMapTempErase;
+    std::pair<std::string, unsigned int> myMapTempSwitchValue;
 
     std::cout << "starting filtering for anagrams: size = " << myMap.size() << std::endl;
-    for (myMapIt1 = myMap.begin(); myMapIt1 != secondToLastElementMyMapIt; myMapIt1++)
+    for (myMapIt1 = myMap.begin(); myMapIt1 != std::prev(myMap.end()); myMapIt1++)
     {
         for (myMapIt2 = std::next(myMapIt1); myMapIt2 != myMap.end(); myMapIt2++)
         {
-            if (is_anagram((myMapIt1)->first, (myMapIt2)->first))
+            if ((myMapIt2)->first != "" && is_anagram((myMapIt1)->first, (myMapIt2)->first))
             {
-                myMapTempErase = myMapIt2;
-                myMapIt2 = std::prev(myMapIt2);          
-                myMap.erase(myMapTempErase);
-                std::cout << "deleted an anagram: size = " << myMap.size() << std::endl;
+                myMapTempErase = myMapIt2;         
+                myMapIt2 = myMap.erase(myMapTempErase);
             }
         }       
     }
+
     std::cout << "finished filtering for anagrams: size = " << myMap.size() << std::endl;
+    std::sort(myMap.begin(), myMap.end(), 
+        [](const std::pair<std::string, unsigned int>& a, const std::pair<std::string, unsigned int>& b) {
+            return a.second > b.second;
+        });
+
+    /*
+    std::ofstream MyFile("sortedDict.txt");
+    std::vector<std::pair<std::string, unsigned int>>::iterator its;
+    for (its = myMap.begin(); its != myMap.end(); its++)
+    {
+        MyFile << (its)->first << "\n";
+    }
+    MyFile.close();
+    */
+
     return myMap;
 }
 
-std::vector<std::map<std::string, unsigned int>> findWords()
+std::vector<std::vector<std::pair<std::string, unsigned int>>> findWords()
 {
     clock_t tStart = clock();
-    std::map<std::string, unsigned int> dictVec = importDictionary("dict.txt");
+    std::vector<std::pair<std::string, unsigned int>> dictVec = importDictionary("dict.txt");
     int dictVecSize = dictVec.size();
     std::cout << "***********\n\n" << dictVecSize << "\n\n***********" << std::endl;
     
 
-    std::map<std::string, unsigned int> tempList;
-    std::vector<std::map<std::string, unsigned int>> wordLists;
+    std::vector<std::pair<std::string, unsigned int>> tempList;
+    std::vector<std::vector<std::pair<std::string, unsigned int>>> wordLists;
 
-    std::map<std::string, unsigned int>::iterator currentElement;
-    std::map<std::string, unsigned int>::iterator it;
-    std::map<std::string, unsigned int>::iterator itr;
-    std::map<std::string, unsigned int>::iterator secondToLastDictVecIt = std::prev(dictVec.end());
+    std::vector<std::pair<std::string, unsigned int>>::iterator currentElement;
+    std::vector<std::pair<std::string, unsigned int>>::iterator it;
+    std::vector<std::pair<std::string, unsigned int>>::iterator itr;
+    std::vector<std::pair<std::string, unsigned int>>::iterator secondToLastDictVecIt = std::prev(dictVec.end());
 
-    std::map<std::string, unsigned int>::iterator node2;
-    std::map<std::string, unsigned int>::iterator node3;
-    std::map<std::string, unsigned int>::iterator node4;
+    std::vector<std::pair<std::string, unsigned int>>::iterator node2;
+    std::vector<std::pair<std::string, unsigned int>>::iterator node3;
+    std::vector<std::pair<std::string, unsigned int>>::iterator node4;
 
     bool doesAppear = false;
     int i = 0;
@@ -114,7 +128,7 @@ std::vector<std::map<std::string, unsigned int>> findWords()
     for (it = dictVec.begin(); it != secondToLastDictVecIt; it++)
     {
         i++;
-        tempList.insert(*it);
+        tempList.push_back(*it);
         tempListSize += 1;
         if (i % 10 == 0)
         {
@@ -140,7 +154,7 @@ std::vector<std::map<std::string, unsigned int>> findWords()
 
             if (!doesAppear)
             {
-                tempList.insert(*itr);
+                tempList.push_back(*itr);
                 tempListSize += 1;
                 doesAppear = true;
 
@@ -169,7 +183,7 @@ std::vector<std::map<std::string, unsigned int>> findWords()
                 wordLists.push_back(tempList);
                 std::cout << "completed list of 5\n";
 
-                std::map<std::string, unsigned int>::iterator itf;
+                std::vector<std::pair<std::string, unsigned int>>::iterator itf;
                 for (itf = tempList.begin(); itf != tempList.end(); itf++)
                 {
                     std::cout << "\n\n*************************" << (itf)->first << "**************************\n\n";
@@ -227,73 +241,73 @@ int convertToBitwise(std::string word)
             wordAsInt |= 0b00000000000000000000000000000001;
             break;
 
-        case 'b':
-        case 'B':
+        case 'e':
+        case 'E':
             wordAsInt |= 0b00000000000000000000000000000010;
             break;
 
-        case 'c':
-        case 'C':
+        case 's':
+        case 'S':
             wordAsInt |= 0b00000000000000000000000000000100;
-            break;
-
-        case 'd':
-        case 'D':
-            wordAsInt |= 0b00000000000000000000000000001000;
-            break;
-
-        case 'e':
-        case 'E':
-            wordAsInt |= 0b00000000000000000000000000010000;
-            break;
-
-        case 'f':
-        case 'F':
-            wordAsInt |= 0b00000000000000000000000000100000;
-            break;
-
-        case 'g':
-        case 'G':
-            wordAsInt |= 0b00000000000000000000000001000000;
-            break;
-
-        case 'h':
-        case 'H':
-            wordAsInt |= 0b00000000000000000000000010000000;
             break;
 
         case 'i':
         case 'I':
-            wordAsInt |= 0b00000000000000000000000100000000;
-            break;
-
-        case 'j':
-        case 'J':
-            wordAsInt |= 0b00000000000000000000001000000000;
-            break;
-
-        case 'k':
-        case 'K':
-            wordAsInt |= 0b00000000000000000000010000000000;
-            break;
-
-        case 'l':
-        case 'L':
-            wordAsInt |= 0b00000000000000000000100000000000;
-            break;
-
-        case 'm':
-        case 'M':
-            wordAsInt |= 0b00000000000000000001000000000000;
-            break;
-
-        case 'n':
-        case 'N':
-            wordAsInt |= 0b00000000000000000010000000000000;
+            wordAsInt |= 0b00000000000000000000000000001000;
             break;
 
         case 'o':
         case 'O':
+            wordAsInt |= 0b00000000000000000000000000010000;
+            break;
+
+        case 'r':
+        case 'R':
+            wordAsInt |= 0b00000000000000000000000000100000;
+            break;
+
+        case 'u':
+        case 'U':
+            wordAsInt |= 0b00000000000000000000000001000000;
+            break;
+
+        case 'n':
+        case 'N':
+            wordAsInt |= 0b00000000000000000000000010000000;
+            break;
+
+        case 'l':
+        case 'L':
+            wordAsInt |= 0b00000000000000000000000100000000;
+            break;
+
+        case 't':
+        case 'T':
+            wordAsInt |= 0b00000000000000000000001000000000;
+            break;
+
+        case 'y':
+        case 'Y':
+            wordAsInt |= 0b00000000000000000000010000000000;
+            break;
+
+        case 'c':
+        case 'C':
+            wordAsInt |= 0b00000000000000000000100000000000;
+            break;
+
+        case 'd':
+        case 'D':
+            wordAsInt |= 0b00000000000000000001000000000000;
+            break;
+
+        case 'h':
+        case 'H':
+            wordAsInt |= 0b00000000000000000010000000000000;
+            break;
+
+        case 'm':
+        case 'M':
             wordAsInt |= 0b00000000000000000100000000000000;
             break;
 
@@ -302,28 +316,28 @@ int convertToBitwise(std::string word)
             wordAsInt |= 0b00000000000000001000000000000000;
             break;
 
-        case 'q':
-        case 'Q':
+        case 'g':
+        case 'G':
             wordAsInt |= 0b00000000000000010000000000000000;
             break;
 
-        case 'r':
-        case 'R':
+        case 'k':
+        case 'K':
             wordAsInt |= 0b00000000000000100000000000000000;
             break;
 
-        case 's':
-        case 'S':
+        case 'b':
+        case 'B':
             wordAsInt |= 0b00000000000001000000000000000000;
             break;
 
-        case 't':
-        case 'T':
+        case 'w':
+        case 'W':
             wordAsInt |= 0b00000000000010000000000000000000;
             break;
 
-        case 'u':
-        case 'U':
+        case 'f':
+        case 'F':
             wordAsInt |= 0b00000000000100000000000000000000;
             break;
 
@@ -332,23 +346,23 @@ int convertToBitwise(std::string word)
             wordAsInt |= 0b00000000001000000000000000000000;
             break;
 
-        case 'w':
-        case 'W':
+        case 'z':
+        case 'Z':
             wordAsInt |= 0b00000000010000000000000000000000;
+            break;
+
+        case 'j':
+        case 'J':
+            wordAsInt |= 0b00000000100000000000000000000000;
             break;
 
         case 'x':
         case 'X':
-            wordAsInt |= 0b00000000100000000000000000000000;
-            break;
-
-        case 'y':
-        case 'Y':
             wordAsInt |= 0b00000001000000000000000000000000;
             break;
 
-        case 'z':
-        case 'Z':
+        case 'q':
+        case 'Q':
             wordAsInt |= 0b00000010000000000000000000000000;
             break;
 
