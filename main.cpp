@@ -9,7 +9,7 @@
 
 int main()
 {
-    clock_t tStart = clock();
+    
     std::vector<std::vector<std::pair<std::string, unsigned int>>> result = findWords();
 
     std::ofstream MyFile("result.txt");
@@ -28,7 +28,7 @@ int main()
 
     MyFile.close();
     std::cout << result.size() << std::endl;
-    printf("Time taken: %.2fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
+    
     return 0;
 }
 
@@ -47,6 +47,10 @@ std::vector<std::pair<std::string, unsigned int>> importDictionary(std::string f
 
     while (getline(inputFile, line, '\n'))
     {
+        if (!line.empty() && line.back() == '\r') {
+            line.pop_back();
+        }
+        
         if (line.size() == 5)
         {
             if ((line[0] == '.' || line[1] == '.' || line[2] == '.' || line[3] == '.' || line[4] == '.') || (line[0] == '-' || line[1] == '-' || line[2] == '-' || line[3] == '-' || line[4] == '-') || (line[0] == ' ' || line[1] == ' ' || line[2] == ' ' || line[3] == ' ' || line[4] == ' ') || (line[0] == '\'' || line[1] == '\'' || line[2] == '\'' || line[3] == '\'' || line[4] == '\'') || (line[0] == '/' || line[1] == '/' || line[2] == '/' || line[3] == '/' || line[4] == '/') || (line[0] == ',' || line[1] == ',' || line[2] == ',' || line[3] == ',' || line[4] == ',') || (line[0] == '&' || line[1] == '&' || line[2] == '&' || line[3] == '&' || line[4] == '&') || (std::isdigit(line[0]) || std::isdigit(line[1]) || std::isdigit(line[2]) || std::isdigit(line[3]) || std::isdigit(line[4])) || checkMultiLetters(line))
@@ -88,7 +92,7 @@ std::vector<std::pair<std::string, unsigned int>> importDictionary(std::string f
             return a.second > b.second;
         });
 
-    /*
+    
     std::ofstream MyFile("sortedDict.txt");
     std::vector<std::pair<std::string, unsigned int>>::iterator its;
     for (its = myMap.begin(); its != myMap.end(); its++)
@@ -96,135 +100,32 @@ std::vector<std::pair<std::string, unsigned int>> importDictionary(std::string f
         MyFile << (its)->first << "\n";
     }
     MyFile.close();
-    */
+    
 
     return myMap;
 }
 
 std::vector<std::vector<std::pair<std::string, unsigned int>>> findWords()
 {
-    clock_t tStart = clock();
-    std::vector<std::pair<std::string, unsigned int>> dictVec = importDictionary("dict.txt");
+    std::vector<std::pair<std::string, unsigned int>> dictVec = importDictionary("words_alpha.txt");
     int dictVecSize = dictVec.size();
     std::cout << "***********\n\n" << dictVecSize << "\n\n***********" << std::endl;
-    
-
-    std::vector<std::pair<std::string, unsigned int>> tempList;
+    clock_t tStart = clock();
     std::vector<std::vector<std::pair<std::string, unsigned int>>> wordLists;
-
-    std::vector<std::pair<std::string, unsigned int>>::iterator currentElement;
     std::vector<std::pair<std::string, unsigned int>>::iterator it;
-    std::vector<std::pair<std::string, unsigned int>>::iterator itr;
-    std::vector<std::pair<std::string, unsigned int>>::iterator secondToLastDictVecIt = std::prev(dictVec.end());
-
-    std::vector<std::pair<std::string, unsigned int>>::iterator node2;
-    std::vector<std::pair<std::string, unsigned int>>::iterator node3;
-    std::vector<std::pair<std::string, unsigned int>>::iterator node4;
-
-    bool doesAppear = false;
+    std::vector<std::pair<std::string, unsigned int>>::iterator secondToLastDictVecIt = std::prev(dictVec.end()); 
+    
     int i = 0;
-    int tempListSize = 0;
-
     for (it = dictVec.begin(); it != secondToLastDictVecIt; it++)
     {
         i++;
-        tempList.push_back(*it);
-        tempListSize += 1;
-        if (i % 10 == 0)
-        {
-            std::cout << i << " / " << dictVecSize << std::endl;
-            printf("%.2fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
-        }
+        std::cout << i << " / " << dictVecSize << std::endl;
+        printf("%.2fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
         
-        for (itr = std::next(it); itr != dictVec.end() && tempListSize < 5; itr++)
-        {       
-            
-            for (currentElement = tempList.begin(); currentElement != tempList.end(); currentElement++)
-            {
-                if (((currentElement)->second & (itr)->second) == 0)
-                {
-                    doesAppear = false;
-                }
-                else
-                {
-                    doesAppear = true;
-                    break;
-                }
-            }
-
-            if (!doesAppear)
-            {
-                tempList.push_back(*itr);
-                tempListSize += 1;
-                doesAppear = true;
-
-                if (tempListSize == 2)
-                {
-                    node2 = itr;
-                }
-                else if (tempListSize == 3)
-                {
-                    node3 = itr;
-                }
-                else if (tempListSize == 4)
-                {
-                    node4 = itr;
-                }
-                else if (tempListSize == 5)
-                {
-                    std::cout << "Found\n" << std::endl;
-                }
-            }
-
-            doesAppear = false;
-
-            if (tempListSize == 5)
-            {
-                wordLists.push_back(tempList);
-                std::cout << "completed list of 5\n";
-
-                std::vector<std::pair<std::string, unsigned int>>::iterator itf;
-                for (itf = tempList.begin(); itf != tempList.end(); itf++)
-                {
-                    std::cout << "\n\n*************************" << (itf)->first << "**************************\n\n";
-                }
-
-            }
-            else if (tempListSize == 2 && itr == secondToLastDictVecIt)
-            {
-                if (node2 == secondToLastDictVecIt)
-                {
-                    break;
-                }
-
-                tempList.erase(std::prev(tempList.end()));
-                tempListSize -= 1;
-                itr = std::next(node2);
-            }
-            else if (tempListSize == 3 && itr== secondToLastDictVecIt)
-            {
-                if (node3 == secondToLastDictVecIt)
-                {
-                    break;
-                }
-                tempList.erase(std::prev(tempList.end()));
-                tempListSize -= 1;
-                itr = std::next(node3);
-            }
-            else if (tempListSize == 4 && itr == secondToLastDictVecIt)
-            {
-                if (node4 == secondToLastDictVecIt)
-                {
-                    break;
-                }
-                tempList.erase(std::prev(tempList.end()));
-                tempListSize -= 1;
-                itr = std::next(node4);
-            }
-        }
-        tempList.clear();
-        tempListSize = 0;
+        std::vector<std::vector<std::pair<std::string, unsigned int>>> completeNodes = findNodes(it, dictVec);
+        wordLists.insert( wordLists.end(), completeNodes.begin(), completeNodes.end());
     }
+    printf("Time taken: %.2fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
     return wordLists;
 }
 
@@ -397,4 +298,110 @@ bool is_anagram(std::string s1, std::string s2)
   std::sort(s1.begin(), s1.end());
   std::sort(s2.begin(), s2.end());
   return s1 == s2;
+}
+
+//TODO: multithreading
+std::vector<std::vector<std::pair<std::string, unsigned int>>> findNodes(std::vector<std::pair<std::string, unsigned int>>::iterator& it, std::vector<std::pair<std::string, unsigned int>>& dictVec) {
+    
+    std::vector<std::pair<std::string, unsigned int>>::iterator secondToLastDictVecIt = std::prev(dictVec.end());
+    std::vector<std::pair<std::string, unsigned int>> tempList;
+    std::vector<std::pair<std::string, unsigned int>>::iterator itr;
+    std::vector<std::pair<std::string, unsigned int>>::iterator currentElement;
+
+    std::vector<std::pair<std::string, unsigned int>>::iterator node2;
+    std::vector<std::pair<std::string, unsigned int>>::iterator node3;
+    std::vector<std::pair<std::string, unsigned int>>::iterator node4;
+
+    std::vector<std::vector<std::pair<std::string, unsigned int>>> tempWordLists;
+
+    int tempListSize = 1;
+    unsigned int temp;
+    temp = (it)->second;
+
+    tempList.push_back(*it);
+
+    for (itr = std::next(it); itr != dictVec.end() && tempListSize < 5; itr++)
+        {                       
+            if ((temp & (itr)->second) == 0)
+            {
+                tempList.push_back(*itr);
+                temp |= (itr)->second;
+                tempListSize += 1;
+
+                if (tempListSize == 2)
+                {
+                    node2 = itr;
+                }
+                else if (tempListSize == 3)
+                {
+                    node3 = itr;
+                }
+                else if (tempListSize == 4)
+                {
+                    node4 = itr;
+                }
+                else if (tempListSize == 5)
+                {
+                    std::cout << "Found\n" << std::endl;
+                }
+            }
+
+            if (tempListSize == 5)
+            {
+                std::vector<std::pair<std::string, unsigned int>>::iterator itf;
+                for (itf = tempList.begin(); itf != tempList.end(); itf++)
+                {
+                    std::cout << "\n*************************" << (itf)->first << "**************************\n";
+                }
+
+                if (node2 == secondToLastDictVecIt)
+                {
+                    tempWordLists.push_back(tempList);
+                    return tempWordLists;
+                }
+                else
+                {
+                    tempWordLists.push_back(tempList);
+                    tempList.pop_back();
+                    tempListSize -= 1;
+                    temp &= (~((itr)->second));     
+                } 
+            }
+            else if (tempListSize == 2 && itr == secondToLastDictVecIt)
+            {
+                if (node2 == secondToLastDictVecIt)
+                {
+                    return tempWordLists;
+                }
+
+                tempList.pop_back();
+                tempListSize -= 1;
+                temp &= (~((node2)->second));
+                itr = node2;
+            }
+            else if (tempListSize == 3 && itr == secondToLastDictVecIt)
+            {
+                if (node3 == secondToLastDictVecIt)
+                {
+                    itr = node2;
+                }
+                tempList.pop_back();
+                tempListSize -= 1;
+                temp &= (~((node3)->second));
+                itr = node3;
+            }
+            else if (tempListSize == 4 && itr == secondToLastDictVecIt)
+            {
+                if (node4 == secondToLastDictVecIt)
+                {
+                    itr = node3;
+                }
+                tempList.pop_back();
+                tempListSize -= 1;
+                temp &= (~((node4)->second));
+                itr = node4;
+            }
+        }
+
+    return tempWordLists;
 }
