@@ -1,11 +1,17 @@
 #include <fstream>
 #include <iostream>
-#include <time.h>
 #include <algorithm>
+#include <thread>
+#include <future>
+#include <queue>
+#include <mutex>
+#include <chrono>
 
-#include <unistd.h>
+#include "jottoWordSearch.h"
 
-#include "function.h"
+std::mutex queueMutex;
+std::condition_variable queueCondition;
+bool finished = false;
 
 int main()
 {
@@ -110,22 +116,48 @@ std::vector<std::vector<std::pair<std::string, unsigned int>>> findWords()
     std::vector<std::pair<std::string, unsigned int>> dictVec = importDictionary("words_alpha.txt");
     int dictVecSize = dictVec.size();
     std::cout << "***********\n\n" << dictVecSize << "\n\n***********" << std::endl;
-    clock_t tStart = clock();
+
     std::vector<std::vector<std::pair<std::string, unsigned int>>> wordLists;
     std::vector<std::pair<std::string, unsigned int>>::iterator it;
     std::vector<std::pair<std::string, unsigned int>>::iterator secondToLastDictVecIt = std::prev(dictVec.end()); 
+
+    std::queue<std::vector<std::pair<std::string, unsigned int>>::iterator> taskQueue;
+    const int numThreads = 14;
+    std::vector<std::thread> threads;
+
+    auto start = std::chrono::steady_clock::now();
+
+    for (int i = 0; i < numThreads; ++i) {
+        threads.emplace_back(workerThread, std::ref(taskQueue), std::ref(dictVec), std::ref(wordLists));
+    }
     
-    int i = 0;
+    int iter = 0;
     for (it = dictVec.begin(); it != secondToLastDictVecIt; it++)
     {
-        i++;
-        std::cout << i << " / " << dictVecSize << std::endl;
-        printf("%.2fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
-        
-        std::vector<std::vector<std::pair<std::string, unsigned int>>> completeNodes = findNodes(it, dictVec);
-        wordLists.insert( wordLists.end(), completeNodes.begin(), completeNodes.end());
+        iter++;
+        std::cout << iter << " / " << dictVecSize << std::endl;
+
+        {
+            std::lock_guard<std::mutex> lock(queueMutex);
+            taskQueue.push(it);
+        }
+
+        queueCondition.notify_one();
     }
-    printf("Time taken: %.2fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
+
+    {
+        std::lock_guard<std::mutex> lock(queueMutex);
+        finished = true;
+    }
+    queueCondition.notify_all();
+
+    for (auto& thread : threads) {
+        thread.join();
+    }
+
+    auto end = std::chrono::steady_clock::now();
+    std::chrono::duration<double> elapsed_seconds = end - start;
+    std::cout << "Algorithm took: " << elapsed_seconds.count() << " seconds" << std::endl;
     return wordLists;
 }
 
@@ -300,8 +332,7 @@ bool is_anagram(std::string s1, std::string s2)
   return s1 == s2;
 }
 
-//TODO: multithreading
-std::vector<std::vector<std::pair<std::string, unsigned int>>> findNodes(std::vector<std::pair<std::string, unsigned int>>::iterator& it, std::vector<std::pair<std::string, unsigned int>>& dictVec) {
+std::vector<std::vector<std::pair<std::string, unsigned int>>> findNodes(std::promise<std::vector<std::vector<std::pair<std::string, unsigned int>>>>&& promiseObj, std::vector<std::pair<std::string, unsigned int>>::iterator& it, std::vector<std::pair<std::string, unsigned int>>& dictVec) {
     
     std::vector<std::pair<std::string, unsigned int>>::iterator secondToLastDictVecIt = std::prev(dictVec.end());
     std::vector<std::pair<std::string, unsigned int>> tempList;
@@ -357,6 +388,7 @@ std::vector<std::vector<std::pair<std::string, unsigned int>>> findNodes(std::ve
                 if (node2 == secondToLastDictVecIt)
                 {
                     tempWordLists.push_back(tempList);
+                    promiseObj.set_value(tempWordLists);
                     return tempWordLists;
                 }
                 else
@@ -371,6 +403,7 @@ std::vector<std::vector<std::pair<std::string, unsigned int>>> findNodes(std::ve
             {
                 if (node2 == secondToLastDictVecIt)
                 {
+                    promiseObj.set_value(tempWordLists);
                     return tempWordLists;
                 }
 
@@ -402,6 +435,42 @@ std::vector<std::vector<std::pair<std::string, unsigned int>>> findNodes(std::ve
                 itr = node4;
             }
         }
-
+    promiseObj.set_value(tempWordLists);
     return tempWordLists;
+}
+
+void workerThread(std::queue<std::vector<std::pair<std::string, unsigned int>>::iterator>& taskQueue,
+                  std::vector<std::pair<std::string, unsigned int>>& dictVec,
+                  std::vector<std::vector<std::pair<std::string, unsigned int>>>& wordLists) {
+    while (true) {
+        std::vector<std::pair<std::string, unsigned int>>::iterator task;
+
+        // Wait for a task to become available
+        {
+            std::unique_lock<std::mutex> lock(queueMutex);
+            queueCondition.wait(lock, [&taskQueue]() { return !taskQueue.empty() || finished; });
+
+            if (finished && taskQueue.empty()) return;
+
+            // Get the next task
+            task = taskQueue.front();
+            taskQueue.pop();
+        }
+
+        // Process the task
+        std::promise<std::vector<std::vector<std::pair<std::string, unsigned int>>>> promiseObj;
+        std::future<std::vector<std::vector<std::pair<std::string, unsigned int>>>> futureObj = promiseObj.get_future();
+        
+        // Pass the task to `findNodes`
+        findNodes(std::move(promiseObj), task, dictVec);
+
+        // Get the result from the future
+        std::vector<std::vector<std::pair<std::string, unsigned int>>> completeNodes = futureObj.get();
+
+        // Insert results into wordLists
+        {
+            std::unique_lock<std::mutex> lock(queueMutex);
+            wordLists.insert(wordLists.end(), completeNodes.begin(), completeNodes.end());
+        }
+    }
 }
