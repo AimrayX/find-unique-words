@@ -122,7 +122,7 @@ std::vector<std::vector<std::pair<std::string, unsigned int>>> findWords()
     std::vector<std::pair<std::string, unsigned int>>::iterator secondToLastDictVecIt = std::prev(dictVec.end()); 
 
     std::queue<std::vector<std::pair<std::string, unsigned int>>::iterator> taskQueue;
-    const int numThreads = 14;
+    const int numThreads = 16;
     std::vector<std::thread> threads;
 
     auto start = std::chrono::steady_clock::now();
@@ -131,11 +131,11 @@ std::vector<std::vector<std::pair<std::string, unsigned int>>> findWords()
         threads.emplace_back(workerThread, std::ref(taskQueue), std::ref(dictVec), std::ref(wordLists));
     }
     
-    int iter = 0;
+    //int iter = 0;
     for (it = dictVec.begin(); it != secondToLastDictVecIt; it++)
     {
-        iter++;
-        std::cout << iter << " / " << dictVecSize << std::endl;
+        //iter++;
+        //std::cout << iter << " / " << dictVecSize << std::endl;
 
         {
             std::lock_guard<std::mutex> lock(queueMutex);
@@ -373,17 +373,17 @@ std::vector<std::vector<std::pair<std::string, unsigned int>>> findNodes(std::pr
                 }
                 else if (tempListSize == 5)
                 {
-                    std::cout << "Found\n" << std::endl;
+                    //std::cout << "Found\n" << std::endl;
                 }
             }
 
             if (tempListSize == 5)
             {
-                std::vector<std::pair<std::string, unsigned int>>::iterator itf;
-                for (itf = tempList.begin(); itf != tempList.end(); itf++)
-                {
-                    std::cout << "\n*************************" << (itf)->first << "**************************\n";
-                }
+                //std::vector<std::pair<std::string, unsigned int>>::iterator itf;
+                //for (itf = tempList.begin(); itf != tempList.end(); itf++)
+                //{
+                    //std::cout << "\n*************************" << (itf)->first << "**************************\n";
+                //}
 
                 if (node2 == secondToLastDictVecIt)
                 {
